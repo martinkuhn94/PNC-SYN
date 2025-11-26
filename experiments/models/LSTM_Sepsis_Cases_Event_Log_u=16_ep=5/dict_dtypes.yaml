@@ -1,0 +1,7 @@
+attribute_datatypes:
+  case:concept:name: string
+  concept:name: string
+  time:timestamp: float64
+time_scaler:
+  max: 36051318.0
+  min: 0.0

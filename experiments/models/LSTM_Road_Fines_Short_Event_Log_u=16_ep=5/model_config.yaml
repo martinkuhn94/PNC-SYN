@@ -1,0 +1,13 @@
+batch_size: 32
+checkpoint_path: checkpoints\best.keras
+dropout: 0.0
+embedding_output_dims: 64
+epochs: 5
+learning_rate: 0.001
+method: LSTM
+num_examples: 19700
+seed: 1039074356
+trace_quantile: 0.95
+units_per_layer:
+- 16
+validation_split: 0.1

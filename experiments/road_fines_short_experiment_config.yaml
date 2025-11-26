@@ -1,0 +1,35 @@
+# Path is resolved relative to the project root unless absolute.
+event_log_path: example_logs/Road_Fines_Short_Event_Log.xes
+
+# Model-related hyperparameters
+methods:
+  - LSTM
+units_per_layer:
+  - 16
+num_epochs: 5
+breakpoint_interval: 5
+embedding_output_dims: 64
+dropout: 0.0
+trace_quantile: 0.95
+sample_size: 5600
+batch_size: 32
+
+# Evaluation settings
+petri_net_keys:
+  - Inductive
+  - Heuristics
+process_metrics:
+  - Fitness
+  - Precision
+  - Generalization
+  - Simplicity
+result_columns:
+  - tv_statistic_event_distribution
+  - hellinger_distance_trace_length_distribution
+  - ks_statistic_throughput_time_distribution
+  - ks_statistic_relative_timestamp_distribution
+
+# Output locations (relative paths allowed)
+models_dir: experiments/models
+synthetic_log_dir: experiments/synthetic_logs
+evaluation_output_dir: experiments/evaluation_results
