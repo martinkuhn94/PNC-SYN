@@ -100,6 +100,48 @@ df["time:timestamp"] = df["time:timestamp"].astype(str)
 df.to_excel("road_fines_e=inf.xlsx", index=False)
 ```
 
+### Sampling Condtional Event Logs
+After loading a trained model, you can generate synthetic event logs that must follow the routing of a given Petri net. By providing a discovered or normative Petri net during sampling, the model produces traces aligned with the allowed process behavior while still preserving the learned temporal and contextual patterns. This enables targeted analysis, scenario exploration, and controlled what-if simulations.
+```python
+import pm4py
+from pm4py.objects.petri_net.importer import importer as pnml_importer
+
+from PNC_SYN.postprocessing import clean_xes_file
+from PNC_SYN.synthesizer import PNCEventLogSynthesizer
+
+from pm4py.algo.discovery.inductive import algorithm as inductive_miner
+from pm4py.objects.conversion.process_tree import converter as pt_converter
+
+from PNC_SYN.petri_net_util import calculate_fintess_alignements, visualize_petri_net
+
+
+# Create Petri Net from Event Log with any Miner
+xes_file_path = "example_logs/Sepsis_Cases_Event_Log.xes"
+event_log = pm4py.read_xes(xes_file_path)
+tree = inductive_miner.apply(event_log)
+net, im, fm = pt_converter.apply(tree)
+
+# or load a Petri Net
+pnml_path = "experiments/normative_models/sepsis_case_normative_model.pnml"
+net, im, fm = pnml_importer.apply(pnml_path)
+visualize_petri_net(net, im, fm)
+
+palsyn_model = PNCEventLogSynthesizer()
+palsyn_model.load("experiments/models/LSTM_Sepsis_Cases_Event_Log_u=16_ep=5")
+
+event_log = palsyn_model.sample(sample_size=100, batch_size=10, petri_net=(net, im, fm))
+event_log_xes = pm4py.convert_to_event_log(event_log)
+
+xes_filename = "road_fines_e=inf.xes"
+pm4py.write_xes(event_log_xes, xes_filename)
+clean_xes_file(xes_filename, xes_filename)
+
+df = pm4py.convert_to_dataframe(event_log_xes)
+df["time:timestamp"] = df["time:timestamp"].astype(str)
+df.to_excel("road_fines_e=inf.xlsx", index=False)
+```
+
+
 ## Future Work
 Future work will focus on enhancing the algorithm and making it available on PyPI.
 
