@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import pickle
 import random
-from typing import Any
+from typing import Any, Tuple, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -24,6 +24,7 @@ from keras.layers import (
     Reshape,
     SimpleRNN,
 )
+from pm4py.objects.petri_net.obj import PetriNet, Marking
 
 from PNC_SYN.metrics_logger import CustomProgressBar, MetricsLogger
 from PNC_SYN.postprocessing.log_postprocessing import generate_df
@@ -268,12 +269,13 @@ class PNCEventLogSynthesizer:
         self.initialize_model(input_data)
         self.train(self.epochs)
 
-    def sample(self, sample_size: int, batch_size: int | None = None) -> pd.DataFrame:
+    def sample(self, sample_size: int, batch_size: int | None = None, petri_net: Optional[Tuple[PetriNet, Marking, Marking]] = None) -> pd.DataFrame:
         """Generate a synthetic event log using the trained model.
 
         Args:
             sample_size: Number of traces to sample.
             batch_size: Optional batch size for sampling.
+            petri_net: Petri Net
 
         Returns:
             A DataFrame containing the sampled event log.
@@ -302,6 +304,7 @@ class PNCEventLogSynthesizer:
                 batch,
                 START_TOKEN,
                 END_TOKEN,
+                petri_net
             )
             synthetic_event_sequences.extend(events_batch)
             synthetic_time_sequences.extend(times_batch)
