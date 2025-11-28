@@ -65,10 +65,6 @@ def sample_batch(
 
     net, initial_marking, final_marking = petri_net
 
-    marking = initial_marking.copy()
-
-    last_marking_per_index = [marking for _ in range(sample_size)]
-
     print("index_word: ", index_word)
 
     token_labels = {
@@ -102,6 +98,9 @@ def sample_batch(
         current_batch = min(int(batch_size), sample_size - len(sequences_events))
         if current_batch <= 0:
             break
+
+
+        last_marking_per_index = [initial_marking.copy() for _ in range(current_batch)]
 
         event_histories: list[list[int]] = [[start_id] for _ in range(current_batch)]
         time_histories: list[list[float]] = [[0.0] for _ in range(current_batch)]
