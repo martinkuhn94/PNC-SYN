@@ -25,12 +25,13 @@ from keras.layers import (
     SimpleRNN,
 )
 from pm4py.objects.petri_net.obj import PetriNet, Marking
+from pm4py.analysis import check_soundness
 
 from PNC_SYN.metrics_logger import CustomProgressBar, MetricsLogger
 from PNC_SYN.postprocessing.log_postprocessing import generate_df
 from PNC_SYN.preprocessing.log_preprocessing import END_TOKEN, START_TOKEN, preprocess_event_log
 from PNC_SYN.preprocessing.log_tokenization import tokenize_log
-from PNC_SYN.sampling.log_sampling import sample_batch
+from PNC_SYN.sampling.log_sampling import sample_batch, sample_batch_simulation
 
 
 def _load_pickle_file(file_path: str) -> Any:
@@ -294,21 +295,42 @@ class PNCEventLogSynthesizer:
         synthetic_time_sequences: list[list[float]] = []
         batch = batch_size or self.batch_size
 
-        while total_sequences < sample_size:
-            remaining = sample_size - total_sequences
-            events_batch, times_batch = sample_batch(
-                remaining,
-                self.tokenizer,
-                self.max_sequence_len,
-                self.model,
-                batch,
-                START_TOKEN,
-                END_TOKEN,
-                petri_net
-            )
-            synthetic_event_sequences.extend(events_batch)
-            synthetic_time_sequences.extend(times_batch)
-            total_sequences += len(events_batch)
+        if petri_net is not None:
+            if check_soundness(*petri_net):
+                print("Petri Net is sound. Start conditional Sampling")
+                while total_sequences < sample_size:
+                    remaining = sample_size - total_sequences
+                    events_batch, times_batch = sample_batch_simulation(
+                        remaining,
+                        self.tokenizer,
+                        self.max_sequence_len,
+                        self.model,
+                        batch,
+                        START_TOKEN,
+                        END_TOKEN,
+                        petri_net
+                    )
+                    synthetic_event_sequences.extend(events_batch)
+                    synthetic_time_sequences.extend(times_batch)
+                    total_sequences += len(events_batch)
+            else:
+                print("Petri Net is not sound. Procees stopped")
+                return
+        else:
+            while total_sequences < sample_size:
+                remaining = sample_size - total_sequences
+                events_batch, times_batch = sample_batch(
+                    remaining,
+                    self.tokenizer,
+                    self.max_sequence_len,
+                    self.model,
+                    batch,
+                    START_TOKEN,
+                    END_TOKEN
+                )
+                synthetic_event_sequences.extend(events_batch)
+                synthetic_time_sequences.extend(times_batch)
+                total_sequences += len(events_batch)
 
         df = generate_df(
             synthetic_event_sequences,
