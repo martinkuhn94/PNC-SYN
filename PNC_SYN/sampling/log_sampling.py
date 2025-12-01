@@ -65,7 +65,6 @@ def sample_batch_simulation(
 
     net, initial_marking, final_marking = petri_net
 
-    print("index_word: ", index_word)
 
     token_labels = {
         index: index_word[index].split("==")[0]
@@ -74,13 +73,10 @@ def sample_batch_simulation(
 
     concept_index = {v: k for k, v in index_word.items()}
 
-    print("index_word", index_word)
-    print("token_labels", token_labels)
-    print("concept_index", concept_index)
 
     for transition in net.transitions:
         if transition.label is not None and transition.label not in concept_index:
-            print(f"Marking transition '{transition.label}' as silent")
+            
             transition.label = None
 
     visible_transitions, silent_transition_map = analyze_transitions_with_end_labels(net, final_marking)
@@ -114,8 +110,6 @@ def sample_batch_simulation(
                 time_histories, maxlen=max_sequence_len, padding="pre", dtype="float32"
             )
             event_pred, time_pred = model.predict_on_batch([padded_events, padded_times])
-            print("event_histories: ", event_histories)
-            print("event_pred: ", event_pred)
 
             for idx in range(current_batch):
                 if not active[idx]:
@@ -129,8 +123,6 @@ def sample_batch_simulation(
                     concept_index,
                 )
 
-                print("idx", idx)
-                print("valid_tokens", valid_tokens)
 
                 # If last marking is reached, end the trace.
                 if last_marking_per_index[idx] == final_marking:
@@ -146,15 +138,12 @@ def sample_batch_simulation(
                     continue
                 probs[0] = 0.0  # never sample padding token
                 probs = _safe_normalize(probs)
-                print("probs", probs)
 
                 next_id: int | None = None
                 while True:
-                    print("currently_enabled_transitions", currently_enabled_transitions)
                     filtered_probabilities = get_filtered_probabilities(valid_tokens, probs)
                     filtered_probabilities = np.array(filtered_probabilities) / np.sum(filtered_probabilities)
                     selected_idx = np.random.choice(len(valid_tokens), p=filtered_probabilities)
-                    print("selected_idx: ", selected_idx)
                     next_word_index = valid_tokens[selected_idx]
 
                     if not isinstance(next_word_index, list):
@@ -185,15 +174,12 @@ def sample_batch_simulation(
                         silent_transition_map,
                         concept_index
                     )
-                    print(last_marking_per_index[idx])
-                    print(final_marking)
 
                 if next_id is None:
                     active[idx] = False
                     continue
 
                 next_time = float(np.clip(time_pred[idx][0], 0.0, 1.0))
-                print("next_id: ", next_id)
 
                 event_histories[idx].append(next_id)
                 time_histories[idx].append(next_time)
