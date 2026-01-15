@@ -8,6 +8,7 @@ import pandas as pd
 from matplotlib.colors import ListedColormap
 from matplotlib.ticker import FuncFormatter
 
+
 METRIC_SUFFIXES = {
     "Fitness": "Inductive_Fitness",
     "Precision": "Inductive_Precision",
